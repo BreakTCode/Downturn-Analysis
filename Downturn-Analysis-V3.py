@@ -3,29 +3,23 @@ from datetime import date as dt
 import xlsxwriter as xlw
 
 #Functions
-def Add_to_Worksheet(worksheet, sheet, i, count, dropper):
-    myVals = [
-                    str(pd.to_datetime(sheet['Date'][i])), 
-                    str(sheet['Close'][i]),
-                    dropper   
-                ]
+def Add_to_Worksheet(worksheet, sheet, i, count, DropPer):
+    myVals = [str(pd.to_datetime(sheet['Date'][i])), str(sheet['Close'][i]), DropPer]
     worksheet.write(('A' + str(count)), i)            
     worksheet.write_row(('B' + str(count)), myVals)
 
     return count + 1
 
-sheets = pd.read_excel('^DJI.xlsx', header=0)
-writer = xlw.Workbook('Downdraw Instances Dow ' + str(dt.today()) + '.xlsx')
-
+#Opens the files to read, creates the new excel file and the sheet that we're writing to.
+sheets = pd.read_excel('^GSPC.xlsx', header=0)
+writer = xlw.Workbook('Downdraw Instances GSPC ' + str(dt.today()) + '.xlsx')
 worksheet1 = writer.add_worksheet('Downturn Instances 5%')
-worksheet2 = writer.add_worksheet('Downturn Instances 10%')
-worksheet3 = writer.add_worksheet('Downturn Instances 20%')
 
+#Creates the header rows for our new file
 myheaders = ['Row', 'Date', 'Close']
 worksheet1.write_row('A1', myheaders)
-worksheet2.write_row('A1', myheaders)
-worksheet3.write_row('A1', myheaders)
 
+#Variables
 DTCount1 = 2
 Total5Downs = 0
 peak = 0
@@ -35,11 +29,16 @@ maxperdown = 1
 i = 1
 weeks = 0
 
+'''
+Get the total number of weeks. Since stocks aren't open on weekends, you need to
+Walk through and add up the weeks because it won't have a consistent week format. 
+'''
 while i < sheets.shape[0]:
     if (sheets['Date'][i] - sheets['Date'][i - 1]).days >= 3:
         weeks += 1
     i += 1
 i = 0
+
 while i < sheets.shape[0]:
     #check if this is the first row
     if peak == 0:
@@ -51,8 +50,8 @@ while i < sheets.shape[0]:
         maxdown = sheets['Close'][i]
         my5per = peak * .05
         DTCount1 = Add_to_Worksheet(worksheet1, sheets, i, DTCount1, 'Peak')
+
     #check if its lower than the downturn we've had
-    
     elif sheets['Close'][i] <= maxdown:
         maxdown = sheets['Close'][i]
         while sheets['Close'][i] <= peak - (maxperdown * my5per) :
